@@ -6,7 +6,7 @@ public class Planet{
 	public double mass;
 	public String imgFileName;
 	
-	public static final double GRAV_CONSTANT = 6.67e-11;
+	private static final double GRAV_CONSTANT = 6.67e-11;
 	
 	public Planet(double xP, double yP, double xV,
 					double yV, double m, String img){
@@ -81,32 +81,32 @@ public class Planet{
 	}
 	
 	/** Calculate the acceleration on X*/
-	public double calcAccelerationByX(double fx){
+	private double calcAccelerationByX(double fx){
 		return fx / this.mass;
 	}
 	
 	/** Calculate the acceleration on Y*/
-	public double calcAccelerationByY(double fy){
+	private double calcAccelerationByY(double fy){
 		return fy / this.mass;
 	}
 	
 	/**Calculate the new velocity by using the acceleration and current velocity on X */
-	public double calcCurrentVelocityByX(double ax, double dt){
+	private double calcCurrentVelocityByX(double ax, double dt){
 		return this.xxVel + ax * dt;
 	}
 	
 	/**Calculate the new velocity by using the acceleration and current velocity on Y */
-	public double calcCurrentVelocityByY(double ay, double dt){
+	private double calcCurrentVelocityByY(double ay, double dt){
 		return this.yyVel + ay * dt;
 	}
 
 	/**Calculate the new position by using the current velocity and position on X */
-	public double calcCurrentPositionByX(double vx, double dt){
+	private double calcCurrentPositionByX(double vx, double dt){
 		return this.xxPos + dt * vx;
 	}
 	
 	/**Calculate the new position by using the current velocity and position on Y */
-	public double calcCurrentPositionByY(double vy, double dt){
+	private double calcCurrentPositionByY(double vy, double dt){
 		return this.yyPos + dt * vy;
 	}
 	
@@ -124,7 +124,7 @@ public class Planet{
 		double proper_coordinateY = this.yyPos / 1e8 * 4;
 		String img = "./images/" + imgFileName;
 		StdDraw.picture(proper_coordinateX, proper_coordinateY, img);
-		
+	
 		/*
 		double coordinateX = in.readDouble();
 			double coordinateY = in.readDouble();
