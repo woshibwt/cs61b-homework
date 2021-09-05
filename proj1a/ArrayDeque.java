@@ -20,20 +20,20 @@ public class ArrayDeque<T> {
      * Adds an item if type T to the front of the deque
      */
     public void addFirst(T item) {
-        if (size == 0){
+        if (size == 0) {
             firstIndex = 0;
             lastIndex = 0;
             items[0] = item;
-            size ++ ;
+            size++;
             return;
         }
         if (size == items.length) {
             resizeUp();
         }
-        if (firstIndex == 0){
+        if (firstIndex == 0) {
             firstIndex = items.length - 1;
         } else {
-            firstIndex -- ;
+            firstIndex--;
         }
         size++;
         items[firstIndex] = item;
@@ -43,20 +43,20 @@ public class ArrayDeque<T> {
      * Adds an item of type T to the back of the deque
      */
     public void addLast(T item) {
-        if (size == 0){
+        if (size == 0) {
             firstIndex = 0;
             lastIndex = 0;
             items[0] = item;
-            size ++ ;
+            size++;
             return;
         }
-        if (size == items.length){
+        if (size == items.length) {
             resizeUp();
         }
-        if (lastIndex == items.length - 1){
+        if (lastIndex == items.length - 1) {
             lastIndex = 0;
         } else {
-            lastIndex ++ ;
+            lastIndex++;
         }
         size++;
         items[lastIndex] = item;
@@ -67,14 +67,14 @@ public class ArrayDeque<T> {
      * Returns true if deque is empty, false otherwise
      */
     public boolean isEmpty() {
-        return  size == 0;
+        return size == 0;
     }
 
     /**
      * Returns the number of items in the deque
      */
     public int size() {
-        if (size <= 0){
+        if (size <= 0) {
             return 0;
         }
         return size;
@@ -100,17 +100,17 @@ public class ArrayDeque<T> {
         }
         T temp = items[firstIndex];
         items[firstIndex] = null;
-        if (firstIndex == items.length - 1){
+        if (firstIndex == items.length - 1) {
             firstIndex = 0;
         } else {
-            firstIndex ++ ;
+            firstIndex++;
         }
         size--;
-        if (size == 0){
+        if (size == 0) {
             firstIndex = 0;
             lastIndex = 0;
         }
-        if (size < items.length / 4){
+        if (size < items.length / 4) {
             resizeDown();
         }
         return temp;
@@ -126,17 +126,17 @@ public class ArrayDeque<T> {
         }
         T temp = items[lastIndex];
         items[lastIndex] = null;
-        if (lastIndex == 0){
+        if (lastIndex == 0) {
             lastIndex = items.length - 1;
         } else {
-            lastIndex -- ;
+            lastIndex--;
         }
         size--;
-        if (size == 0){
+        if (size == 0) {
             firstIndex = 0;
             lastIndex = 0;
         }
-        if (size < items.length / 4){
+        if (size < items.length / 4) {
             resizeDown();
         }
         return temp;
@@ -149,7 +149,7 @@ public class ArrayDeque<T> {
      * Must not alter the deque
      */
     public T get(int index) {
-        return items[(firstIndex) + index % items.length];
+        return items[(firstIndex + index) % items.length];
     }
 
     /**
@@ -167,10 +167,10 @@ public class ArrayDeque<T> {
 
     /**
      * resize down the length of array
-     * */
-    private void resizeDown(){
+     */
+    private void resizeDown() {
         T[] a = (T[]) new Object[items.length / RFACTOR];
-        if (lastIndex < firstIndex){
+        if (lastIndex < firstIndex) {
             int sizeOfFirstCopy = items.length - firstIndex;
             System.arraycopy(items, firstIndex, a, 0, sizeOfFirstCopy);
             System.arraycopy(items, 0, a, sizeOfFirstCopy, size - sizeOfFirstCopy);

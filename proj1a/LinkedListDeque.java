@@ -1,14 +1,16 @@
 public class LinkedListDeque<T> {
-    private IntNode sentinel;
-    private int size = 0;
+    private TypeNode sentinel;
+    private int size;
 
-    public class IntNode {
-        private IntNode prev;
+    public class TypeNode {
+        private TypeNode prev;
         private T item;
-        private IntNode next;
+        private TypeNode next;
 
-        public IntNode(T x) {
+        public TypeNode(TypeNode p, T x, TypeNode n) {
+            prev = p;
             item = x;
+            next = n;
         }
     }
 
@@ -16,25 +18,18 @@ public class LinkedListDeque<T> {
      * create an empty linked list deque
      */
     public LinkedListDeque() {
-        sentinel = new IntNode(null);
+        size = 0;
+        sentinel = new TypeNode(null, null, null);
+        sentinel.next = sentinel;
+        sentinel.prev = sentinel;
     }
 
     /**
      * add an item to the first place of linked list deque
      */
     public void addFirst(T x) {
-        IntNode p = new IntNode(x);
-        if (size == 0) {
-            sentinel.next = p;
-            sentinel.prev = p;
-            p.prev = sentinel;
-            p.next = sentinel;
-            size++;
-            return;
-        }
-        p.next = sentinel.next;
-        p.prev = sentinel;
-        sentinel.next = p;
+        sentinel.next = new TypeNode(sentinel, x, sentinel.next);
+        sentinel.next.next.prev = sentinel.next;
         size++;
     }
 
@@ -42,19 +37,8 @@ public class LinkedListDeque<T> {
      * add an item to the last place of linked list deque
      */
     public void addLast(T x) {
-        IntNode p = new IntNode(x);
-        if (size == 0) {
-            sentinel.next = p;
-            sentinel.prev = p;
-            p.prev = sentinel;
-            p.next = sentinel;
-            size++;
-            return;
-        }
-        sentinel.prev.next = p;
-        p.prev = sentinel.prev;
-        sentinel.prev = p;
-        p.next = sentinel;
+        sentinel.prev = new TypeNode(sentinel.prev, x, sentinel);
+        sentinel.prev.prev.next = sentinel.prev;
         size++;
     }
 
@@ -62,13 +46,13 @@ public class LinkedListDeque<T> {
      * remove the first item from the linked list deque
      */
     public T removeFirst() {
-        if (sentinel.next == sentinel) {
+        if (size == 0) {
             return null;
         }
+        size--;
         T p = sentinel.next.item;
         sentinel.next = sentinel.next.next;
         sentinel.next.prev = sentinel;
-        size--;
         return p;
     }
 
@@ -76,41 +60,49 @@ public class LinkedListDeque<T> {
      * remove the last item from the linked list deque{}
      */
     public T removeLast() {
-        if (sentinel.prev == sentinel){
+        if (size == 0) {
             return null;
         }
+        size--;
         T p = sentinel.prev.item;
+        sentinel.prev.prev.next = sentinel;
         sentinel.prev = sentinel.prev.prev;
-        sentinel.prev.next = sentinel;
-        size -- ;
         return p;
     }
 
     public T get(int index) {
-        if (size < index) {
-            return null;
-        }
-        IntNode p = sentinel.next;
-        if (p.equals(sentinel)) {
-            return null;
-        }
-
-        for (int i = 0; i < index; i++) {
-            if (i == index) {
-                return p.item;
+        int count = 0;
+        TypeNode ptr = sentinel;
+        while (ptr.next != sentinel) {
+            ptr = ptr.next;
+            if (count == index) {
+                return ptr.item;
             }
-            p = p.next;
+            count++;
         }
         return null;
+    }
+
+    public T getRecursiveHelper(int index, int count, TypeNode ptr) {
+        if (index == count) {
+            return ptr.item;
+        }
+        return getRecursiveHelper(index, count + 1, ptr.next);
 
     }
 
     /**
      * same as get, but uses recursion
      */
-//    public T getRecursive(int index) {
-//
-//    }
+    public T getRecursive(int index) {
+        if (index > size || index < 0) {
+            return null;
+        }
+        int count = 0;
+        TypeNode ptr = sentinel.next;
+        return getRecursiveHelper(index, count, ptr);
+    }
+
 
     /**
      * get the size of linked list deque
@@ -123,26 +115,20 @@ public class LinkedListDeque<T> {
      * whether the linked list is empty or not
      */
     boolean isEmpty() {
-        if (size == 0) {
-            return true;
-        } else {
-            return false;
-        }
+        return size == 0;
     }
 
     /**
      * print out the deque
      */
     public void printDeque() {
-        if (size == 0) {
-            return;
+        TypeNode ptr = sentinel;
+        while (ptr.next != sentinel) {
+            ptr = ptr.next;
+            System.out.print(ptr.item);
+            System.out.print(" ");
         }
-        IntNode p = sentinel.next;
-        for (int i = 0; i < size; i++) {
-            System.out.print(p.item + " ");
-            p = p.next;
-        }
-
+        System.out.println();
     }
 
 
