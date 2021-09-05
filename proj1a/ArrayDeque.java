@@ -1,50 +1,65 @@
 public class ArrayDeque<T> {
     private static final int RFACTOR = 2;
+    private static final int START_SIZE = 8;
     private T[] items;
     private int size;
-    private int capacity;
-    private int nextFirst = 4;
-    private int nextLast = 5;
+    private int firstIndex;
+    private int lastIndex;
 
     /**
      * creates an empty array deque
      */
     public ArrayDeque() {
-        items = (T[]) new Object[8];
+        items = (T[]) new Object[START_SIZE];
+        firstIndex = 0;
+        lastIndex = 0;
         size = 0;
-        capacity = 8;
     }
 
     /**
      * Adds an item if type T to the front of the deque
      */
     public void addFirst(T item) {
-        if (nextFirst == nextLast) {
-            size++;
-            items[nextFirst] = item;
-            resize();
+        if (size == 0){
+            firstIndex = 0;
+            lastIndex = 0;
+            items[0] = item;
+            size ++ ;
             return;
         }
+        if (size == items.length) {
+            resizeUp();
+        }
+        if (firstIndex == 0){
+            firstIndex = items.length - 1;
+        } else {
+            firstIndex -- ;
+        }
         size++;
-        items[nextFirst] = item;
-        nextFirst--;
-        nextFirst = (capacity + nextFirst % capacity) % capacity;
+        items[firstIndex] = item;
     }
 
     /**
      * Adds an item of type T to the back of the deque
      */
     public void addLast(T item) {
-        if (nextFirst == nextLast) {
-            size++;
-            items[nextLast] = item;
-            resize();
+        if (size == 0){
+            firstIndex = 0;
+            lastIndex = 0;
+            items[0] = item;
+            size ++ ;
             return;
         }
+        if (size == items.length){
+            resizeUp();
+        }
+        if (lastIndex == items.length - 1){
+            lastIndex = 0;
+        } else {
+            lastIndex ++ ;
+        }
         size++;
-        items[nextLast] = item;
-        nextLast++;
-        nextLast %= capacity;
+        items[lastIndex] = item;
     }
 
 
@@ -52,16 +67,16 @@ public class ArrayDeque<T> {
      * Returns true if deque is empty, false otherwise
      */
     public boolean isEmpty() {
-        if (size == 0) {
-            return true;
-        }
-        return false;
+        return  size == 0;
     }
 
     /**
      * Returns the number of items in the deque
      */
     public int size() {
+        if (size <= 0){
+            return 0;
+        }
         return size;
     }
 
@@ -70,7 +85,7 @@ public class ArrayDeque<T> {
      * separated by a space
      */
     public void printDeque() {
-        for (int i = 0; i < capacity; i++) {
+        for (int i = 0; i < items.length; i++) {
             System.out.print(get(i) + " ");
         }
     }
@@ -83,11 +98,21 @@ public class ArrayDeque<T> {
         if (size == 0) {
             return null;
         }
-        nextFirst++;
-        nextFirst %= capacity;
+        T temp = items[firstIndex];
+        items[firstIndex] = null;
+        if (firstIndex == items.length - 1){
+            firstIndex = 0;
+        } else {
+            firstIndex ++ ;
+        }
         size--;
-        T temp = items[nextFirst];
-        items[nextFirst] = null;
+        if (size == 0){
+            firstIndex = 0;
+            lastIndex = 0;
+        }
+        if (size < items.length / 4){
+            resizeDown();
+        }
         return temp;
     }
 
@@ -99,11 +124,21 @@ public class ArrayDeque<T> {
         if (size == 0) {
             return null;
         }
-        nextLast--;
-        nextLast = (capacity + nextLast % capacity) % capacity;
+        T temp = items[lastIndex];
+        items[lastIndex] = null;
+        if (lastIndex == 0){
+            lastIndex = items.length - 1;
+        } else {
+            lastIndex -- ;
+        }
         size--;
-        T temp = items[nextLast];
-        items[nextLast] = null;
+        if (size == 0){
+            firstIndex = 0;
+            lastIndex = 0;
+        }
+        if (size < items.length / 4){
+            resizeDown();
+        }
         return temp;
     }
 
@@ -114,25 +149,38 @@ public class ArrayDeque<T> {
      * Must not alter the deque
      */
     public T get(int index) {
-        if (index >= capacity) {
-            return null;
-        }
-        return items[index];
+        return items[(firstIndex) + index % items.length];
     }
 
     /**
-     * resize the length of array
+     * resize up the length of array
      */
-    public void resize() {
-        double ratio = (double) size / capacity;
-        if (ratio >= 0.5) {
-            T[] a = (T[]) new Object[capacity * RFACTOR];
-            System.arraycopy(items, 0, a, 0, capacity);
-            items = a;
-            nextFirst = capacity + capacity / 2;
-            nextLast = capacity + capacity / 2 + 1;
-            capacity = capacity * RFACTOR;
+    private void resizeUp() {
+        T[] a = (T[]) new Object[items.length * RFACTOR];
+        int sizeOfFirstCopy = items.length - firstIndex;
+        System.arraycopy(items, firstIndex, a, 0, sizeOfFirstCopy);
+        System.arraycopy(items, 0, a, sizeOfFirstCopy, size - sizeOfFirstCopy);
+        items = a;
+        firstIndex = 0;
+        lastIndex = size - 1;
+    }
+
+    /**
+     * resize down the length of array
+     * */
+    private void resizeDown(){
+        T[] a = (T[]) new Object[items.length / RFACTOR];
+        if (lastIndex < firstIndex){
+            int sizeOfFirstCopy = items.length - firstIndex;
+            System.arraycopy(items, firstIndex, a, 0, sizeOfFirstCopy);
+            System.arraycopy(items, 0, a, sizeOfFirstCopy, size - sizeOfFirstCopy);
+        } else {
+            System.arraycopy(items, firstIndex, a, 0, size);
         }
+        items = a;
+        firstIndex = 0;
+        lastIndex = size - 1;
+
     }
 
 

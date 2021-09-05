@@ -72,7 +72,10 @@ public class ArrayDequeTest {
         passed = checkSize(9, lld1.size()) && passed;
 
         System.out.println("Printing out deque: ");
-        lld1.printDeque();
+        lld1.removeFirst();
+        lld1.removeLast();
+        passed = checkSize(7, lld1.size()) && passed;
+
 
         printTestStatus(passed);
 
