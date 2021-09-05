@@ -80,7 +80,9 @@ public class LinkedListDeque<T> {
         }
 
         for (int i = 0; i < index; i++) {
-            if (i == index) return p.item;
+            if (i == index) {
+                return p.item;
+            }
             p = p.next;
         }
         return null;
@@ -98,8 +100,7 @@ public class LinkedListDeque<T> {
             return null;
         } else if (n == index) {
             return sentinel.next.item;
-        }
-        else {
+        } else {
             return null;
         }
     }
@@ -117,8 +118,7 @@ public class LinkedListDeque<T> {
     boolean isEmpty() {
         if (size == 0) {
             return true;
-        }
-        else {
+        } else {
             return false;
         }
     }
@@ -127,7 +127,9 @@ public class LinkedListDeque<T> {
      * print out the deque
      */
     public void printDeque() {
-        if (size == 0) return;
+        if (size == 0) {
+            return;
+        }
         IntNode p = sentinel.next;
         for (int i = 0; i < size; i++) {
             System.out.println(p.item);
