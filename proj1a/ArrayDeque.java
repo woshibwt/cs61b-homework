@@ -52,8 +52,10 @@ public class ArrayDeque<T> {
      * Returns true if deque is empty, false otherwise
      */
     public boolean isEmpty() {
-        if (size == 0) return true;
-        else return false;
+        if (size == 0) {
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -78,7 +80,9 @@ public class ArrayDeque<T> {
      * if no such item exists, returns null
      */
     public T removeFirst() {
-        if (size == 0) return null;
+        if (size == 0) {
+            return null;
+        }
         nextFirst++;
         nextFirst %= capacity;
         size--;
@@ -92,7 +96,9 @@ public class ArrayDeque<T> {
      * if no such item exists, returns null
      */
     public T removeLast() {
-        if (size == 0) return null;
+        if (size == 0) {
+            return null;
+        }
         nextLast--;
         nextLast = (capacity + nextLast % capacity) % capacity;
         size--;
@@ -108,7 +114,9 @@ public class ArrayDeque<T> {
      * Must not alter the deque
      */
     public T get(int index) {
-        if (index >= capacity) return null;
+        if (index >= capacity) {
+            return null;
+        }
         return items[index];
     }
 
