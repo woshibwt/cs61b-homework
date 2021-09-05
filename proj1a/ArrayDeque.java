@@ -182,6 +182,4 @@ public class ArrayDeque<T> {
         lastIndex = size - 1;
 
     }
-
-
 }

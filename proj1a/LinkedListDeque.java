@@ -2,7 +2,7 @@ public class LinkedListDeque<T> {
     private TypeNode sentinel;
     private int size;
 
-    public class TypeNode {
+    private class TypeNode {
         private TypeNode prev;
         private T item;
         private TypeNode next;
@@ -83,7 +83,7 @@ public class LinkedListDeque<T> {
         return null;
     }
 
-    public T getRecursiveHelper(int index, int count, TypeNode ptr) {
+    private T getRecursiveHelper(int index, int count, TypeNode ptr) {
         if (index == count) {
             return ptr.item;
         }
@@ -114,7 +114,7 @@ public class LinkedListDeque<T> {
     /**
      * whether the linked list is empty or not
      */
-    boolean isEmpty() {
+    public boolean isEmpty() {
         return size == 0;
     }
 
@@ -130,6 +130,4 @@ public class LinkedListDeque<T> {
         }
         System.out.println();
     }
-
-
 }
