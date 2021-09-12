@@ -5,11 +5,11 @@ public class Palindrome {
      * eg. "persiflage" --> ["p","e","s","i","f","l","a","g",l"e"]
      */
     public Deque<Character> wordToDeque(String word) {
-        ArrayDeque<Character> AD = new ArrayDeque<>();
+        ArrayDeque<Character> ad = new ArrayDeque<>();
         for (int i = 0; i < word.length(); i++) {
-            AD.addLast(word.charAt(i));
+            ad.addLast(word.charAt(i));
         }
-        return AD;
+        return ad;
     }
 
     public boolean isPalindrome(String word) {
@@ -42,7 +42,7 @@ public class Palindrome {
         if (wordList.isEmpty() || wordList.size() == 1) {
             return true;
         }
-        if (cc.equalChars(wordList.removeFirst(), wordList.removeLast())){
+        if (cc.equalChars(wordList.removeFirst(), wordList.removeLast())) {
             return isPalindromeHelper(wordList, cc);
         } else {
             return false;
