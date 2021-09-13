@@ -7,6 +7,9 @@ public class OffByN implements CharacterComparator {
 
     @Override
     public boolean equalChars(char x, char y) {
-        return (x - y == diff) || (y - x == diff);
+        if ((x - y == diff) || (y - x == diff)) {
+            return true;
+        }
+        return  false;
     }
 }
