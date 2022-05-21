@@ -1,4 +1,3 @@
-// TODO: Make sure to make this class a part of the synthesizer package
 //package <package name>;
 package synthesizer;
 
@@ -38,12 +37,12 @@ public class GuitarString {
      */
     public void tic() {
         double first = buffer.dequeue();
-        double second = buffer.peak();
+        double second = buffer.peek();
         buffer.enqueue(DECAY * 0.5 * (first + second));
     }
 
     /* Return the double at the front of the buffer. */
     public double sample() {
-        return buffer.peak();
+        return buffer.peek();
     }
 }

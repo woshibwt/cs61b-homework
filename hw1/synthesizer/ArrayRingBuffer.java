@@ -16,7 +16,7 @@ public class ArrayRingBuffer<T> implements BoundedQueue<T> {
      * Create a new ArrayRingBuffer with the given capacity.
      */
     public ArrayRingBuffer(int capacity) {
-        rb = (T[]) new Object[capacity]; //way to  initialize generic array?
+        rb = (T[]) new Object[capacity];//way to  initialize generic array?
         first = last = fillCount = 0;
     }
 
@@ -67,7 +67,7 @@ public class ArrayRingBuffer<T> implements BoundedQueue<T> {
      * Return oldest item, but don't remove it.
      */
     @Override
-    public T peak() {
+    public T peek() {
         if (isEmpty()) {
             throw new RuntimeException("Ring buffer underflow");
         }
@@ -75,60 +75,37 @@ public class ArrayRingBuffer<T> implements BoundedQueue<T> {
     }
 
 
-
-
-    // TODO: When you get to part 5, implement the needed code to support iteration.
+    /**
+     * returns an iterator
+     */
     @Override
     public Iterator<T> iterator() {
-        return  new ArrayRingBufferIterator();
+        return new BufferIterator();
     }
 
-    private class ArrayRingBufferIterator implements Iterator<T> {
-        private int currPos;
-        private int count;
+    private class BufferIterator implements Iterator<T> {
+        private int pos;
+        private int num;
 
-        public ArrayRingBufferIterator() {
-            currPos = first;
-            count = 0;
+        BufferIterator() {
+            pos = first;
+            num = 0;
         }
 
         @Override
         public boolean hasNext() {
-            return count < fillCount();
+            return num < fillCount;
         }
 
         @Override
         public T next() {
-            T currItem = rb[currPos];
-            currPos = (currPos + 1) % capacity();
-            count += 1;
-            return currItem;
-        }
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        // Compare to itself.
-        if (other == this) {
-            return true;
-        }
-        if (other == null) {
-            return false;
-        }
-        if (other.getClass() != this.getClass()) {
-            return false;
-        }
-        ArrayRingBuffer<T> o = (ArrayRingBuffer<T>) other;
-        if (o.fillCount() != this.fillCount()) {
-            return false;
-        }
-        Iterator<T> thisIterator = this.iterator();
-        Iterator<T> otherIterator = o.iterator();
-        while (thisIterator.hasNext() && otherIterator.hasNext()) {
-            if (thisIterator.next() != otherIterator.next()) {
-                return false;
+            T returnItem = rb[pos];
+            pos++;
+            if (pos == capacity()) {
+                pos = 0;
             }
+            num++;
+            return returnItem;
         }
-        return true;
     }
 }
