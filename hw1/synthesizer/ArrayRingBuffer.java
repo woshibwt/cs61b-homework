@@ -40,9 +40,10 @@ public class ArrayRingBuffer<T> implements BoundedQueue<T> {
         if (isFull()) {
             throw new RuntimeException("Ring buffer overflow");
         }
-        rb[last] = (T) x;
-        last++;
-        last %= capacity();
+        rb[last++] = (T) x;
+        if (last == capacity()) {
+            last = 0;
+        }
         fillCount++;
     }
 
@@ -55,9 +56,10 @@ public class ArrayRingBuffer<T> implements BoundedQueue<T> {
         if (isEmpty()) {
             throw new RuntimeException("Ring buffer underflow");
         }
-        T dequeuedItem = rb[first];
-        first++;
-        first %= capacity();
+        T dequeuedItem = rb[first++];
+        if (first == capacity()) {
+            first = 0;
+        }
         fillCount--;
         return dequeuedItem;
     }
