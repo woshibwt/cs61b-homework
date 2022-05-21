@@ -19,6 +19,21 @@ public class ArrayRingBuffer<T> extends AbstractBoundedQueue<T> {
         rb = (T[]) new Object[capacity]; //way to  initialize generic array?
         first = last = fillCount = 0;
     }
+    /**
+     * Return the capacity of ring buffer.
+     */
+    @Override
+    public int capacity() {
+        return rb.length;
+    }
+
+    /**
+     * Return the number of items currently in the ring buffer.
+     */
+    @Override
+    public int fillCount() {
+        return fillCount;
+    }
 
     /**
      * Adds x to the end of the ring buffer. If there is no room, then
@@ -31,7 +46,7 @@ public class ArrayRingBuffer<T> extends AbstractBoundedQueue<T> {
         if (isFull()) {
             throw new RuntimeException("Ring buffer overflow");
         }
-        rb[last] = (T) x;
+        rb[last] = x;
         last++;
         last %= capacity();
         fillCount++;
