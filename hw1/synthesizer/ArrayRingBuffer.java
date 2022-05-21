@@ -2,7 +2,7 @@ package synthesizer;
 
 import java.util.Iterator;
 
-public class ArrayRingBuffer<T> implements BoundedQueue<T> {
+public class ArrayRingBuffer<T> extends AbstractBoundedQueue<T> {
     /* Index for the next dequeue or peek. */
     private int first;            // index for the next dequeue or peek
     /* Index for the next enqueue. */
@@ -16,7 +16,7 @@ public class ArrayRingBuffer<T> implements BoundedQueue<T> {
      * Create a new ArrayRingBuffer with the given capacity.
      */
     public ArrayRingBuffer(int capacity) {
-        rb = (T[]) new Object[capacity];//way to  initialize generic array?
+        rb = (T[]) new Object[capacity]; //way to  initialize generic array?
         first = last = fillCount = 0;
     }
 
