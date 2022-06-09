@@ -5,8 +5,9 @@ import huglife.Action;
 import huglife.Occupant;
 import huglife.HugLifeUtils;
 import java.awt.Color;
-import java.util.Map;
-import java.util.List;
+import java.util.*;
+
+import static huglife.HugLifeUtils.randomEntry;
 
 /** An implementation of a motile pacifist photosynthesizer.
  *  @author Josh Hug
@@ -20,12 +21,16 @@ public class Plip extends Creature {
     /** blue color. */
     private int b;
 
+    private static final Double moveEnergyLose = 0.15;
+    private static final Double stayEnergyGain = 0.2;
+    private static final Double moveProbability = 0.5;
+
     /** creates plip with energy equal to E. */
     public Plip(double e) {
         super("plip");
-        r = 0;
-        g = 0;
-        b = 0;
+        r = 99;
+        g = 63;
+        b = 76;
         energy = e;
     }
 
@@ -42,8 +47,17 @@ public class Plip extends Creature {
      *  that you get this exactly correct.
      */
     public Color color() {
-        g = 63;
-        return color(r, g, b);
+        return color(r, (int)(g + 96 * energy), b);
+    }
+
+    private void energyRestrict() {
+        energy = Math.min(energy, 2);
+        energy = Math.max(energy, 0);
+    }
+
+    @Override
+    public String name() {
+        return "plip";
     }
 
     /** Do nothing with C, Plips are pacifists. */
@@ -55,11 +69,16 @@ public class Plip extends Creature {
      *  private static final variable. This is not required for this lab.
      */
     public void move() {
+        energy -= moveEnergyLose;
+        energyRestrict();
     }
 
 
     /** Plips gain 0.2 energy when staying due to photosynthesis. */
     public void stay() {
+        energy += stayEnergyGain;
+        energyRestrict();
+
     }
 
     /** Plips and their offspring each get 50% of the energy, with none
@@ -67,7 +86,9 @@ public class Plip extends Creature {
      *  Plip.
      */
     public Plip replicate() {
-        return this;
+        energy *= 0.5;
+        Plip pbaby = new Plip(energy);
+        return pbaby;
     }
 
     /** Plips take exactly the following actions based on NEIGHBORS:
@@ -81,6 +102,28 @@ public class Plip extends Creature {
      *  for an example to follow.
      */
     public Action chooseAction(Map<Direction, Occupant> neighbors) {
+        List<Direction> emptyNeighbours = new ArrayList<>();
+        boolean anyClorus = false;
+        for (Direction dir: neighbors.keySet()) {
+            if (neighbors.get(dir).name().equals("empty")) {
+                emptyNeighbours.add(dir);
+            } else if (neighbors.get(dir).name().equals("clorus")) {
+                anyClorus = true;
+            }
+        }
+
+        if (emptyNeighbours.isEmpty()) {
+            return new Action(Action.ActionType.STAY);
+        }
+
+        if (energy() >= 1.0) {
+            return new Action(Action.ActionType.REPLICATE, randomEntry(emptyNeighbours));
+        }
+
+        if (anyClorus && Math.random() < moveProbability) {
+            return new Action(Action.ActionType.MOVE, randomEntry(emptyNeighbours));
+        }
+
         return new Action(Action.ActionType.STAY);
     }
 
