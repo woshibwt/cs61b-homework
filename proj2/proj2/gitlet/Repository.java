@@ -57,6 +57,7 @@ public class Repository {
        return HEADFileContent.replace(HEAD_BRANCH_REF_PREFIX, "");
     });
 
+    /** The commit that HEAD points to*/
     private final Lazy<Commit> HEADCommit = lazy(() -> getBranchHeadCommit(currentBranch.get()));
 
     /**
@@ -83,10 +84,10 @@ public class Repository {
      *
      * <pre>
      * .gitlet
-     * ├── HEAD
-     * ├── objects
-     * └── refs
-     *     └── heads
+     * |- HEAD
+     * |- objects
+     * |- refs
+     *     \- heads
      * </pre>
      */
     public static void init() {
@@ -184,6 +185,11 @@ public class Repository {
                 : join(CWD, fileName);
     }
 
+    /**
+     * Add file to the staging area.
+     *
+     * @param fileName Name of the file
+     */
     public void add(String fileName) {
         File file = getFileFromCWD(fileName);
         if (!file.exists()) {

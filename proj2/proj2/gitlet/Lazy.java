@@ -11,6 +11,7 @@ public class Lazy<T> implements Supplier <T>{
     public Lazy(Supplier<T> delegate) {
         this.delegate = delegate;
     }
+
     @Override
     public T get() {
         if (!initialized) {
