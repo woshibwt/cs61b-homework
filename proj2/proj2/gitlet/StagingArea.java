@@ -9,6 +9,7 @@ import java.util.Set;
 
 
 // import static gitlet.MyUtils.rm;
+import static gitlet.MyUtils.rm;
 import static gitlet.Utils.readObject;
 import static gitlet.Utils.writeObject;
 
@@ -52,6 +53,38 @@ public class StagingArea implements Serializable {
     }
 
     /**
+     * Tells whether the staging area is clean.
+     * which means no file is added, modified, or removed.
+     *
+     * @return true if is clean
+     */
+    public boolean isClean() {
+        return added.isEmpty() && removed.isEmpty();
+    }
+
+    /**
+     * Clear the staging area.
+     */
+    public void clear() {
+        added.clear();
+        removed.clear();
+    }
+
+    /**
+     * Perform a commit. Return tracked files Map after commit.
+     *
+     * @return Map with file path as key and SHA1 id as value.
+     */
+    public Map<String, String> commit() {
+        tracked.putAll(added);
+        for (String filePath: removed) {
+            tracked.remove(filePath);
+        }
+        clear();
+        return tracked;
+    }
+
+    /**
      * Add file to the staging area.
      * @param file File instance
      * @return true if the staging area is changed
@@ -80,6 +113,22 @@ public class StagingArea implements Serializable {
             blob.save();
         }
         return true;
+    }
+
+    public boolean remove(File file) {
+        String filePath = file.getPath();
+
+        String addedBlobId = added.remove(filePath);
+        if (addedBlobId != null) {
+            return true;
+        }
+        if (tracked.get(filePath) != null) {
+            if (file.exists()) {
+                rm(file);
+            }
+            return removed.add(filePath);
+        }
+        return false;
     }
 
 

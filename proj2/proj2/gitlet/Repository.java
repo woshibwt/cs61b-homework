@@ -199,4 +199,65 @@ public class Repository {
             stagingArea.get().save();
         }
     }
+
+    /**
+     *  Perform a commit with message.
+     * @param msg Commit message
+     */
+    public void commit(String msg) {
+        commit(msg, null);
+    }
+
+    /**
+     * Perform a commit with message and two parents.
+     * @param msg           commit message
+     * @param secondParent  Second parent Commit SHA1 id
+     */
+    private void commit(String msg, String secondParent) {
+        if (stagingArea.get().isClean()) {
+            exit("No changes added to the commit");
+        }
+        Map<String, String> newTrackedFilesMap = stagingArea.get().commit();
+        stagingArea.get().save();
+        List<String> parents = new ArrayList<>();
+        parents.add(HEADCommit.get().getId());
+        if (secondParent != null) {
+            parents.add(secondParent);
+        }
+        Commit newCommit = new Commit(msg, parents, newTrackedFilesMap);
+        newCommit.save();
+        setBranchHeadCommit(currentBranch.get(), newCommit.getId());
+    }
+
+    /**
+     * Remove file.
+     * @param fileName Name of the file.
+     */
+    public void remove(String fileName) {
+        File file = getFileFromCWD(fileName);
+        if (stagingArea.get().remove(file)) {
+            stagingArea.get().save();
+        } else {
+            exit("No reason to remove the file.");
+        }
+    }
+
+    /**
+     * Print log of the current branch.
+     */
+    public void log() {
+        StringBuilder logBuilder = new StringBuilder();
+        Commit currentCommit = HEADCommit.get();
+        while (true) {
+            logBuilder.append(currentCommit.getLog()).append("\n");
+            List<String> parentCommitIds = currentCommit.getParents();
+            if (parentCommitIds.size() == 0) {
+                break;
+            }
+            String firstParentCommitId = parentCommitIds.get(0);
+            currentCommit = Commit.fromFile(firstParentCommitId);
+        }
+        System.out.println(logBuilder);
+    }
+
 }

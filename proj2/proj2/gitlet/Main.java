@@ -16,18 +16,38 @@ public class Main {
         }
         String firstArg = args[0];
         switch(firstArg) {
-            case "init":
+            case "init" -> {
                 // Done: handle the `init` command
                 validateNumArgs(args, 1);
                 Repository.init();
-                break;
-            case "add":
+            }
+            case "add" -> {
                 // DONE: handle the `add [filename]` command
                 Repository.checkWorkingDir();
                 validateNumArgs(args, 2);
                 String fileName = args[1];
                 new Repository().add(fileName);
-                break;
+            }
+            case "commit" -> {
+                Repository.checkWorkingDir();
+                validateNumArgs(args, 2);
+                String message = args[1];
+                if (message.length() == 0) {
+                    exit("Please enter a commit message");
+                }
+                new Repository().commit(message);
+            }
+            case "rm"-> {
+                Repository.checkWorkingDir();
+                validateNumArgs(args, 2);
+                String fileName = args[1];
+                new Repository().remove(fileName);
+            }
+            case "log"-> {
+                Repository.checkWorkingDir();
+                validateNumArgs(args, 1);
+                new Repository().log();
+            }
             // TODO: FILL THE REST IN
         }
     }
