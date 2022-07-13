@@ -94,6 +94,30 @@ public class Main {
                     default ->  exit("Incorrect operands");
                 }
             }
+            case "branch" -> {
+                Repository.checkWorkingDir();
+                validateNumArgs(args, 2);
+                String branchName = args[1];
+                new Repository().branch(branchName);
+            }
+            case "rm-branch" -> {
+                Repository.checkWorkingDir();
+                validateNumArgs(args, 2);
+                String branchName = args[1];
+                new Repository().rmBranch(branchName);
+            }
+            case "reset" -> {
+                Repository.checkWorkingDir();
+                validateNumArgs(args, 2);
+                String commitId = args[1];
+                new Repository().reset(commitId);
+            }
+            case "merge" -> {
+                Repository.checkWorkingDir();
+                validateNumArgs(args, 2);
+                String branchName = args[1];
+                new Repository().merge(branchName);
+            }
             // TODO: FILL THE REST IN
         }
     }
