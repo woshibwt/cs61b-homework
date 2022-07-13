@@ -44,6 +44,25 @@ public class StagingArea implements Serializable {
     }
 
     /**
+     * Get added files Map.
+     *
+     * @return Map with file path as key and SHA1 id as value.
+     *
+     */
+    public Map<String, String> getAdded() {
+        return added;
+    }
+
+    /**
+     * Get removed files Set.
+     *
+     * @return Set of files paths.
+     */
+    public Set<String> getRemoved() {
+        return removed;
+    }
+
+    /**
      * Set tracked files
      *
      * @param filesMap Map with file path as key and SHA1 id as value

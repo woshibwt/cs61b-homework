@@ -1,5 +1,7 @@
 package gitlet;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.function.Supplier;
 
@@ -20,6 +22,21 @@ public class MyUtils {
     public static void exit(String message, Object... args) {
         message(message, args);
         System.exit(0);
+    }
+
+    /**
+     * Tells if the deserialized object instance of given class.
+     *
+     * @param file File instance
+     * @param c    Target class
+     * @return     if is instance
+     */
+    public static boolean isFileInstanceOf(File file, Class<?> c) {
+        try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(file))) {
+            return c.isInstance(in.readObject());
+        } catch (Exception ignored) {
+            return false;
+        }
     }
 
     /**

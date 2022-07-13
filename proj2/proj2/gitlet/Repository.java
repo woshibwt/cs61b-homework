@@ -2,6 +2,7 @@ package gitlet;
 
 import java.io.File;
 import java.nio.file.Paths;
+import java.sql.SQLOutput;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -42,13 +43,18 @@ public class Repository {
     public static final File OBJECT_DIR = join(GITLET_DIR, "objects");
 
     /** The HEAD file. */
-    public static final File HEAD = join(GITLET_DIR, "HEAD");
+    private static final File HEAD = join(GITLET_DIR, "HEAD");
 
     /** The refs directory */
-    public static final File REFS_DIR = join(GITLET_DIR, "refs");
+    private static final File REFS_DIR = join(GITLET_DIR, "refs");
 
     /** The heads directory */
-    public static final File BRANCH_HEADS_DIR = join(REFS_DIR, "heads");
+    private static final File BRANCH_HEADS_DIR = join(REFS_DIR, "heads");
+
+    /** Files in the current working directory */
+    private static final Lazy<File[]> currentFiles = lazy(() -> CWD.listFiles(File::isFile));
+
+
 
 
     /** The current branch name. */
@@ -100,6 +106,12 @@ public class Repository {
         mkdir(OBJECT_DIR);
         setCurrentBranch(DEFAULT_BRANCH_NAME);
         createInitialCommit();
+    }
+
+    public static void globalLog() {
+        StringBuilder logBuilder = new StringBuilder();
+        forEachCommitInOrder(commit->logBuilder.append(commit.getLog()).append("\n"));
+        System.out.println(logBuilder);
     }
 
     /**
@@ -173,6 +185,70 @@ public class Repository {
     }
 
     /**
+     * Iterate all commits in the order of created date
+     * and execute callback function on each of them.
+     *
+     * @param cb Function that accepts Commit as a single argument
+     */
+    private static void forEachCommitInOrder(Consumer<Commit> cb) {
+        Comparator<Commit> commitComparator = Comparator.comparing(Commit::getDate).reversed();
+        Queue<Commit> commitsPriorityQueue = new PriorityQueue<>(commitComparator);
+        forEachCommit(cb, commitsPriorityQueue);
+    }
+
+    /**
+     * Helper method to iterate all commits.
+     *
+     * @param cb        Callback function executed on the current commit.
+     *
+     */
+    private static void forEachCommit(Consumer<Commit> cb) {
+        Queue<Commit> commitsQueue = new ArrayDeque<>();
+        forEachCommit(cb, commitsQueue);
+    }
+
+    /**
+     * Helper method to iterate commit.
+     *
+     * @param cb                    Callback function executed on the current commit.
+     * @param queueToHoldCommits    New Queue instance to hold the commits while iterating
+     */
+    @SuppressWarnings("ConstantConditions")
+    private static void forEachCommit(Consumer<Commit> cb, Queue<Commit> queueToHoldCommits) {
+        Set<String> checkedCommitIds = new HashSet<>();
+
+        File[] branchHeadFiles = BRANCH_HEADS_DIR.listFiles();
+        Arrays.sort(branchHeadFiles, Comparator.comparing(File::getName));
+
+        for (File branchHeadFile : branchHeadFiles) {
+            String branchHeadCommitId = readContentsAsString(branchHeadFile);
+            if (checkedCommitIds.contains(branchHeadCommitId)) {
+                continue;
+            }
+            checkedCommitIds.add(branchHeadCommitId);
+            Commit branchHeadCommit = Commit.fromFile(branchHeadCommitId);
+            queueToHoldCommits.add(branchHeadCommit);
+        }
+
+        while (true) {
+            Commit nextCommit = queueToHoldCommits.poll();
+            cb.accept(nextCommit);
+            List<String> parentCommitIds = nextCommit.getParents();
+            if (parentCommitIds.size() == 0) {
+                break;
+            }
+            for (String parentCommitId : parentCommitIds) {
+                if (checkedCommitIds.contains(parentCommitId)) {
+                    continue;
+                }
+                checkedCommitIds.add(parentCommitId);
+                Commit parentCommit = Commit.fromFile(parentCommitId);
+                queueToHoldCommits.add(parentCommit);
+            }
+        }
+    }
+
+    /**
      *
      * Get a file instance from CWD by the name
      *
@@ -183,6 +259,84 @@ public class Repository {
         return Paths.get(fileName).isAbsolute()
                 ? new File(fileName)
                 : join(CWD, fileName);
+    }
+
+    /**
+     * Get a map of file paths and their SHA1 id from CWD
+     *
+     * @return Map with file path as key and SHA1 id as value
+     */
+    private static Map<String, String> getCurrentFilesMap() {
+        Map<String, String> filesMap = new HashMap<>();
+        for (File file : currentFiles.get()) {
+            String filePath = file.getPath();
+            String blobId = Blob.generateId(file);
+            filesMap.put(filePath, blobId);
+
+        }
+        return filesMap;
+    }
+
+
+    /**
+     * Append lines of file name in order from files paths Set to StringBuilder.
+     *
+     * @param stringBuilder         StringBuilder instance
+     * @param filePathsCollection   Collection of file paths
+     */
+    private static void appendFileNamesInOrder(StringBuilder stringBuilder, Collection<String> filePathsCollection) {
+        List<String> filePathsList = new ArrayList<>(filePathsCollection);
+        appendFileNamesInOrder(stringBuilder, filePathsList);
+    }
+
+    /**
+     * Append lines of file name in order from files paths Set to StringBuilder.
+     *
+     * @param stringBuilder         StringBuilder instance
+     * @param filePathsList         List of file paths.
+     */
+    private static void appendFileNamesInOrder(StringBuilder stringBuilder, List<String> filePathsList) {
+        filePathsList.sort(String::compareTo);
+        for (String filePath : filePathsList) {
+            String fileName = Paths.get(filePath).getFileName().toString();
+            stringBuilder.append(fileName).append("\n");
+        }
+    }
+
+    @SuppressWarnings("ConstantConditions")
+    private static String getActualCommitId(String commitId) {
+        if (commitId.length() < UID_LENGTH) {
+            if (commitId.length() < 4) {
+                exit("Commit id should contain at least 4 characters.");
+            }
+            String objectDirName = getObjectDirName(commitId);
+            File objectDir = join(OBJECT_DIR, objectDirName);
+            if (!objectDir.exists()) {
+                exit("No commit with that id exists.");
+            }
+
+            boolean isFound = false;
+            String objectFileNamePrefix = getObjectFileName(commitId);
+
+            for (File objectFile : objectDir.listFiles()) {
+                String objectFileName = objectFile.getName();
+                if (objectFileName.startsWith(objectFileNamePrefix) && isFileInstanceOf(objectFile, Commit.class)) {
+                    if (isFound) {
+                        exit("More than 1 commit has the same id prefix");
+                    }
+                    commitId = objectDirName + objectFileName;
+                    isFound = true;
+                }
+            }
+            if (!isFound) {
+                exit("No commit with that id exists");
+            }
+        } else {
+            if (!getObjectFile(commitId).exists()) {
+                exit("No commit with that id exists");
+            }
+        }
+        return commitId;
     }
 
     /**
@@ -258,6 +412,205 @@ public class Repository {
             currentCommit = Commit.fromFile(firstParentCommitId);
         }
         System.out.println(logBuilder);
+    }
+
+    /**
+     * Print the status.
+     */
+    @SuppressWarnings("ConstantConditions")
+    public void status() {
+        StringBuilder statusBuilder = new StringBuilder();
+
+        //branches
+        statusBuilder.append("=== Branches ===").append("\n");
+        statusBuilder.append("*").append(currentBranch.get()).append("\n");
+        String[] branchNames = BRANCH_HEADS_DIR.list((dir, name) -> !name.equals(currentBranch.get()));
+        Arrays.sort(branchNames);
+        for (String branchName : branchNames) {
+            statusBuilder.append(branchName).append("\n");
+        }
+        statusBuilder.append("\n");
+        // end
+
+        Map<String, String> addedFilesMap = stagingArea.get().getAdded();
+        Set<String> removedFilePathsSet = stagingArea.get().getRemoved();
+
+        // staged files
+        statusBuilder.append("=== Staged Files ===").append("\n");
+        appendFileNamesInOrder(statusBuilder, addedFilesMap.keySet());
+        statusBuilder.append("\n");
+        // end
+
+        // removed files
+        statusBuilder.append("=== Removed Files === ").append("\n");
+        appendFileNamesInOrder(statusBuilder, removedFilePathsSet);
+        statusBuilder.append("\n");
+        // end
+
+        // modifications not staged for commit
+        statusBuilder.append("=== Modifications Not Staged For Commit ===").append("\n");
+        List<String> modifiedNotStageFilePaths = new ArrayList<>();
+        Set<String> deletedNotStageFilePaths = new HashSet<>();
+
+        Map<String, String> currentFilesMap = getCurrentFilesMap();
+        Map<String, String> trackedFilesMap = HEADCommit.get().getTracked();
+
+        trackedFilesMap.putAll(addedFilesMap);
+        for (String filePath : removedFilePathsSet) {
+            trackedFilesMap.remove(filePath);
+        }
+
+        for (Map.Entry<String, String> entry : trackedFilesMap.entrySet()) {
+            String filePath = entry.getKey();
+            String blobId = entry.getValue();
+
+            String currentFileBlobId = currentFilesMap.get(filePath);
+
+            if (currentFileBlobId != null) {
+                if (!currentFileBlobId.equals(blobId)) {
+                    // 1. Tracked in the current commit, changed in the working directory, but not staged, or
+                    // 2. Staged for addition, but with different contents than in the working directory.
+                    modifiedNotStageFilePaths.add(filePath);
+                }
+                currentFilesMap.remove(filePath);
+            } else {
+                // 3. Staged for addition, but deleted in the working directory; or
+                // 4. Not staged for removal, but tracked in the current commit and deleted from the working directory.
+                modifiedNotStageFilePaths.add(filePath);
+                deletedNotStageFilePaths.add(filePath);
+            }
+        }
+
+        modifiedNotStageFilePaths.sort(String:: compareTo);
+
+        for (String filePath : modifiedNotStageFilePaths) {
+            String fileName = Paths.get(filePath).getFileName().toString();
+            statusBuilder.append(fileName);
+            if (deletedNotStageFilePaths.contains(filePath)) {
+                statusBuilder.append(" ").append("(deleted)");
+            } else {
+                statusBuilder.append(" ").append("(modified)");
+            }
+            statusBuilder.append("\n");
+        }
+        statusBuilder.append("\n");
+        // end
+
+        // untracked files
+        statusBuilder.append("=== Untracked Files ===").append("\n");
+        appendFileNamesInOrder(statusBuilder, currentFilesMap.keySet());
+        statusBuilder.append("\n");
+        // end
+
+        System.out.println(statusBuilder);
+    }
+
+    /**
+     * Print all commits that have the exact message.
+     *
+     * @param msg Content of the message
+     */
+    public static void find(String msg) {
+        StringBuilder resultBuilder = new StringBuilder();
+        forEachCommit(commit -> {
+            if (commit.getMessage().equals(msg)) {
+                resultBuilder.append(commit.getId()).append("\n");
+            }
+        });
+        if (resultBuilder.length() == 0) {
+            exit("Found no commit with that message");
+        }
+        System.out.print(resultBuilder);
+    }
+
+    /**
+     * Checkout file from HEAD commit.
+     *
+     * @param fileName Name of the file
+     */
+    public void checkout(String fileName) {
+        String filePath = getFileFromCWD(fileName).getPath();
+        if (!HEADCommit.get().restoreTracked(filePath)) {
+            exit("File does not exists in that commit");
+        }
+    }
+
+    /**
+     * Checkout file from specific commit id.
+     *
+     * @param commitId  Commit SHA1 id
+     * @param fileName  Name of the file.
+     */
+    public void checkout(String commitId, String fileName) {
+        commitId = getActualCommitId(commitId);
+        String filePath = getFileFromCWD(fileName).getPath();
+        if (!Commit.fromFile(commitId).restoreTracked(filePath)) {
+            exit("File does not exist in that commit.");
+        }
+    }
+
+    public void checkoutBranch(String targetBranchName) {
+        File targetBranchHeadFile = getBranchHeadFile(targetBranchName);
+        if (!targetBranchHeadFile.exists()) {
+            exit ("No such branch exists");
+        }
+        if (targetBranchName.equals(currentBranch.get())) {
+            exit("No need to checkout the current branch.");
+        }
+        Commit targetBranchHeadCommit = getBranchHeadCommit(targetBranchHeadFile);
+        checkUntracked(targetBranchHeadCommit);
+        checkoutCommit(targetBranchHeadCommit);
+        setCurrentBranch(targetBranchName);
+    }
+
+    /**
+     * checkout to specific commit.
+     *
+     * @param targetCommit Commit instance
+     */
+    private void checkoutCommit(Commit targetCommit) {
+        stagingArea.get().clear();
+        stagingArea.get().save();
+        for (File file : currentFiles.get()) {
+            rm(file);
+        }
+        targetCommit.restoreAllTracked();
+    }
+
+    /**
+     * Exit with message if target commit would overwrite the untracked files.
+     *
+     * @param targetCommit Commit SHA1 id.
+     */
+    private void checkUntracked(Commit targetCommit) {
+        Map<String, String> currentFilesMap = getCurrentFilesMap();
+        Map<String, String> trackedFilesMap = HEADCommit.get().getTracked();
+        Map<String, String> addedFilesMap = stagingArea.get().getAdded();
+        Set<String> removedFilePathsSet = stagingArea.get().getRemoved();
+
+        List<String> untrackedFilePaths = new ArrayList<>();
+
+        for (String filePath: currentFilesMap.keySet()) {
+            if (trackedFilesMap.containsKey(filePath)) {
+                if (removedFilePathsSet.contains(filePath)) {
+                    untrackedFilePaths.add(filePath);
+                }
+            } else {
+                if (!addedFilesMap.containsKey(filePath)) {
+                    untrackedFilePaths.add(filePath);
+                }
+            }
+        }
+
+        Map<String, String> targetCommitTrackedFilesMap = targetCommit.getTracked();
+
+        for (String filePath : untrackedFilePaths) {
+            String blobId = currentFilesMap.get(filePath);
+            String targetBlobId = targetCommitTrackedFilesMap.get(filePath);
+            if (!blobId.equals(targetBlobId)) {
+                exit("There is an untracked file in the way; delete it, or add and commit it first");
+            }
+        }
     }
 
 }

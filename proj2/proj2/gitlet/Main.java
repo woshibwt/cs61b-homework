@@ -48,6 +48,52 @@ public class Main {
                 validateNumArgs(args, 1);
                 new Repository().log();
             }
+            case "global-log" -> {
+                Repository.checkWorkingDir();
+                validateNumArgs(args, 1);
+                Repository.globalLog();
+            }
+            case "find" -> {
+                Repository.checkWorkingDir();
+                validateNumArgs(args, 2);
+                String message = args[1];
+                if (message.length() == 0) {
+                    exit("Found no commit with that message");
+                }
+                Repository.find(message);
+            }
+            case "status" -> {
+                Repository.checkWorkingDir();
+                validateNumArgs(args, 1);
+                new Repository().status();
+
+            }
+            case "checkout" -> {
+                Repository.checkWorkingDir();
+                Repository repository = new Repository();
+                switch (args.length) {
+                    case 3 -> {
+                        if (!args[1].equals("--")) {
+                            exit("Incorrect operands");
+                        }
+                        String fileName = args[2];
+                        repository.checkout(fileName);
+                    }
+                    case 4 -> {
+                        if (!args[2].equals("--")) {
+                            exit("Incorrect operands.");
+                        }
+                        String commitId = args[1];
+                        String fileName = args[3];
+                        repository.checkout(commitId, fileName);
+                    }
+                    case 2 -> {
+                        String branch = args[1];
+                        repository.checkoutBranch(branch);
+                    }
+                    default ->  exit("Incorrect operands");
+                }
+            }
             // TODO: FILL THE REST IN
         }
     }

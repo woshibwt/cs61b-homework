@@ -96,6 +96,15 @@ public class Commit implements Serializable {
     }
 
     /**
+     * Get the Date instance when the commit is created.
+     *
+     * @return Date instance
+     */
+    public Date getDate() {
+        return date;
+    }
+
+    /**
      * Get the timestamp.
      *
      * @return Data and time
@@ -105,6 +114,15 @@ public class Commit implements Serializable {
         DateFormat dataFormat = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy z", Locale.ENGLISH);
         return dataFormat.format(date);
 
+    }
+
+    /**
+     * Get the commit message.
+     *
+     * @return Commit message
+     */
+    public String getMessage() {
+        return message;
     }
 
     /**
@@ -123,6 +141,25 @@ public class Commit implements Serializable {
      */
     public Map<String, String> getTracked() {
         return tracked;
+    }
+
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
+    public boolean restoreTracked(String filePath) {
+        String blobId = tracked.get(filePath);
+        if (blobId == null) {
+            return false;
+        }
+        Blob.fromFile(blobId).writeContentToSource();
+        return true;
+    }
+
+    /**
+     * Restore all tracked files, overwriting the existing ones.
+     */
+    public void restoreAllTracked() {
+        for (String blobId : tracked.values()) {
+            Blob.fromFile(blobId).writeContentToSource();
+        }
     }
 
     /**

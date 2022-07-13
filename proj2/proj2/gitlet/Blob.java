@@ -30,9 +30,41 @@ public class Blob implements Serializable {
         file = getObjectFile(id);
     }
 
+    /**
+     * Generate SHA1 id
+     *
+     * @param sourceFile sourceFile File instance
+     * @return SHA1 id
+     */
+    public static String generateId(File sourceFile) {
+        String filePath = sourceFile.getPath();
+        byte[] fileContent = readContents(sourceFile);
+        return sha1(filePath, fileContent);
+    }
 
+    /**
+     * Get a Blob instance from the file with the SAH1 id.
+     *
+     * @param id SHA1 id
+     * @return Blob instance
+     */
+    public static Blob fromFile(String id) {
+        return readObject(getObjectFile(id), Blob.class);
+    }
+
+    /**
+     * Save this Blob instance to file in objects folder.
+     */
     public void save() {
         saveObjectFile(file, this);
+    }
+
+
+    /**
+     * Write the file content back to the source file.
+     */
+    public void writeContentToSource() {
+        writeContents(source, content);
     }
 
     /**
